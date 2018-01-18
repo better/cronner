@@ -29,7 +29,7 @@ class TestCronner(unittest.TestCase):
         @cronner.register('* * * * *')
         def fn():
             pass
-        line = cronner.get_crontab_entries()[0]
+        line = cronner.get_entries()[0]
         self.assertEqual(
             line.split(),
             ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(__file__), 'run', 'fn']
@@ -43,7 +43,7 @@ class TestCronner(unittest.TestCase):
         @cronner.register('* * * * *')
         def gn():
             pass
-        lines = cronner.get_crontab_entries()
+        lines = cronner.get_entries()
         self.assertEqual(
             sorted(line.split() for line in lines),
             sorted([

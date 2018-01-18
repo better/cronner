@@ -6,6 +6,24 @@ import sys
 
 
 _CRONTAB_TEMPLATE = '${schedule} ${python_executable} ${script_path} run ${method_name}'
+# This is really for demonstration only. I'm not even sure this is a valid template
+_K8S_TEMPLATE = '''apiVersion: batch/v2alpha1
+kind: CronJob
+metadata:
+  name: cronner-${method_name}
+spec:
+  schedule: "${schedule}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          nodeSelector:
+            nodepurpose: cronner
+          restartPolicy: Never
+          containers:
+          - name: job-runner
+            image: alpine:3.6
+            command: ["${python_executable}", "${script_path}", "run", "${method_name}"]'''
 
 
 class Cronner:
@@ -16,9 +34,14 @@ class Cronner:
     def __contains__(self, fn_name):
         return fn_name in self._registry
 
-    def configure(self, crontab_template=None, template_vars=None):
+    def configure(self, crontab_template=None, k8s_template=None, template_vars=None):
         self._templates = {
-            'crontab': crontab_template if crontab_template is not None else _CRONTAB_TEMPLATE
+            'crontab': crontab_template if crontab_template is not None else _CRONTAB_TEMPLATE,
+            'k8s': k8s_template if k8s_template is not None else _K8S_TEMPLATE
+        }
+        self._template_joiners = {
+            'crontab': '\n',
+            'k8s': '\n---\n'
         }
         self._template_vars = {'python_executable': sys.executable}
         if template_vars is not None:
@@ -36,8 +59,8 @@ class Cronner:
             return fn
         return wrapper
 
-    def _get_entries(self, entry_type='crontab'):
-        template = self._templates[entry_type]
+    def get_entries(self, template_type='crontab'):
+        template = self._templates[template_type]
 
         # TODO: find a better proxy for script_path
         # currently takes the filename from the first stack frame that
@@ -60,15 +83,14 @@ class Cronner:
 
         return [_get_entry(fn_cfg) for fn_cfg in self._registry.values()]
 
-    def get_crontab_entries(self):
-        return self._get_entries(entry_type='crontab')
-
     def run(self, fn_name, *args):
         self._registry[fn_name]['_fn'](*args)
 
     def main(self):
-        if len(sys.argv) >= 2 and sys.argv[1] == 'crontab':
-            print('\n'.join(self.get_crontab_entries()))
+        if len(sys.argv) >= 2 and sys.argv[1] in self._templates:
+            template_type = sys.argv[1]
+            joiner = self._template_joiners[template_type]
+            print(joiner.join(self.get_entries(template_type=template_type)))
         elif len(sys.argv) >= 3 and sys.argv[1] == 'run' and sys.argv[2] in self:
             self.run(sys.argv[2], *sys.argv[3:])
         else:
