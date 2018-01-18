@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 import sys
 
 
@@ -28,15 +29,16 @@ class Cronner:
             return fn
         return wrapper
 
-    def _get_crontab_line(self, fn_name, schedule, timeout, lock, suffix):
+    def _get_crontab_line(self, fn_name, schedule, timeout, lock, suffix, script_path):
         # TODO: simplify this or allow arbitrary user-supplied template fields
         cfg = dict(
-            self._config, 
+            self._config,
             fn_name=fn_name,
             schedule=schedule,
             timeout=timeout,
             lock=lock,
             suffix=suffix,
+            script_path=script_path,
             lock_file='~/.{}.cronner.lock'.format(fn_name) # FIXME
         )
         items = [
@@ -50,6 +52,7 @@ class Cronner:
             '{} {}'.format(
                 cfg['python_executable'], ' '.join(cfg['python_args'])
             ),
+            script_path,
             'run',
             fn_name,
             suffix,
@@ -60,9 +63,10 @@ class Cronner:
         )
 
     def _get_crontab(self):
+        script_path = os.path.abspath(sys.argv[0])
         return '\n'.join(
-            self._get_crontab_line(fn_name, schedule, timeout, lock, suffix)
-            for fn_name, (_, schedule, timeout, lock, suffix)
+            self._get_crontab_line(fn_name, schedule, timeout, lock, suffix, script_path)
+            for fn_name, (fn, schedule, timeout, lock, suffix)
             in self._registry.items()
         )
 
