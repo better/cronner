@@ -1,12 +1,8 @@
-Easily schedule python methods to be run under the cron daemon.
+# Easily schedule python methods to be run under cron
 
-# Demo
+## Writing a random integer to `/home/randint` every minute
 
-Write a random integer to the file `/home/randint` every minute.
-
-## Create a script
-
-### `test.py`
+Create the following file and name it `test.py`.
 
 ```python
 import cronner
@@ -15,13 +11,21 @@ import random
 @cronner.register('* * * * *')
 def write_randint():
     with open('/home/randint', 'at') as f:
-        f.write(str(random.randint(0, 100)) + '\n')
+            f.write('{}\n'.format(random.randint(0, 100)))
 
 cronner.main()
 ```
 
-## Register the schedule with `crond`
+Run this.
 
 ```sh
 $ python test.py crontab | crontab -
+```
+
+That's it.
+
+## Installation
+
+```sh
+$ pip install cronner
 ```
