@@ -5,8 +5,10 @@ import string
 import sys
 
 
-_CRONTAB_TEMPLATE = '${schedule} ${python_executable} ${script_path} run ${method_name}'
-# This is really for demonstration only. I'm not even sure this is a valid template
+_DEFAULT_TEMPLATE = '${schedule} ${python_executable} ${script_path} run ${method_name}'
+_DEFAULT_TEMPLATE_JOINER = '\n'
+
+# Demonstration only
 _K8S_TEMPLATE = '''apiVersion: batch/v2alpha1
 kind: CronJob
 metadata:
@@ -34,15 +36,14 @@ class Cronner:
     def __contains__(self, fn_name):
         return fn_name in self._registry
 
-    def configure(self, crontab_template=None, k8s_template=None, template_vars=None):
-        self._templates = {
-            'crontab': crontab_template if crontab_template is not None else _CRONTAB_TEMPLATE,
-            'k8s': k8s_template if k8s_template is not None else _K8S_TEMPLATE
-        }
-        self._template_joiners = {
-            'crontab': '\n',
-            'k8s': '\n---\n'
-        }
+    def configure(
+        self,
+        template=_DEFAULT_TEMPLATE,
+        template_joiner=_DEFAULT_TEMPLATE_JOINER,
+        template_vars=None
+    ):
+        self._template = template
+        self._template_joiner = template_joiner
         self._template_vars = {'python_executable': sys.executable}
         if template_vars is not None:
             self._template_vars.update(**template_vars)
@@ -59,9 +60,7 @@ class Cronner:
             return fn
         return wrapper
 
-    def get_entries(self, template_type='crontab'):
-        template = self._templates[template_type]
-
+    def get_entries(self):
         # TODO: find a better proxy for script_path
         # currently takes the filename from the first stack frame that
         # doesn't have it's code defined in this file
@@ -79,7 +78,7 @@ class Cronner:
             if 'template_vars' in fn_cfg:
                 template_vars.update(fn_cfg['template_vars'])
             template_vars['schedule'] = fn_cfg['schedule']
-            return string.Template(template).safe_substitute(**template_vars)
+            return string.Template(self._template).safe_substitute(**template_vars)
 
         return [_get_entry(fn_cfg) for fn_cfg in self._registry.values()]
 
@@ -87,10 +86,8 @@ class Cronner:
         self._registry[fn_name]['_fn'](*args)
 
     def main(self):
-        if len(sys.argv) >= 2 and sys.argv[1] in self._templates:
-            template_type = sys.argv[1]
-            joiner = self._template_joiners[template_type]
-            print(joiner.join(self.get_entries(template_type=template_type)))
+        if len(sys.argv) >= 2 and sys.argv[1] == 'gen-cfg':
+            print(self._template_joiner.join(self.get_entries()))
         elif len(sys.argv) >= 3 and sys.argv[1] == 'run' and sys.argv[2] in self:
             self.run(sys.argv[2], *sys.argv[3:])
         else:

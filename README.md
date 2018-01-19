@@ -21,7 +21,7 @@ cronner.main()
 Run this.
 
 ```sh
-$ python test.py crontab | crontab -
+$ python test.py gen-cfg | crontab -
 ```
 
 That's it.
