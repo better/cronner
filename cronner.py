@@ -5,14 +5,14 @@ import string
 import sys
 
 
-_DEFAULT_TEMPLATE = '${schedule} ${python_executable} ${script_path} run ${method_name}'
+_DEFAULT_TEMPLATE = '${schedule} ${python_executable} ${script_path} run ${fn_name}'
 _DEFAULT_TEMPLATE_JOINER = '\n'
 
 # Demonstration only
 _K8S_TEMPLATE = '''apiVersion: batch/v2alpha1
 kind: CronJob
 metadata:
-  name: cronner-${method_name}
+  name: cronner-${fn_name}
 spec:
   schedule: "${schedule}"
   jobTemplate:
@@ -25,7 +25,7 @@ spec:
           containers:
           - name: job-runner
             image: alpine:3.6
-            command: ["${python_executable}", "${script_path}", "run", "${method_name}"]'''
+            command: ["${python_executable}", "${script_path}", "run", "${fn_name}"]'''
 
 
 class Cronner:
@@ -65,7 +65,7 @@ class Cronner:
 
         def _get_entry(fn_cfg):
             template_vars = {
-                'method_name': fn_cfg['_fn'].__name__,
+                'fn_name': fn_cfg['_fn'].__name__,
                 'python_executable': sys.executable,
                 'script_path': script_path
             }

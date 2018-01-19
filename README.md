@@ -1,4 +1,4 @@
-# Easily schedule python methods to be run under cron
+# Easily schedule python functions to be run under cron
 
 [![Build Status](https://travis-ci.org/liambuchanan/cronner.svg?branch=master)](https://travis-ci.org/liambuchanan/cronner)
 

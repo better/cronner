@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='cronner',
     version='0.5.0',
-    description='Easily schedule python methods to be run under the cron daemon.',
+    description='Easily schedule python functions to be run under the cron daemon.',
     py_modules=['cronner'],
     test_suite='test_cronner',
     url='https://github.com/liambuchanan/cronner',
