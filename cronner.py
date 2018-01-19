@@ -36,26 +36,20 @@ class Cronner:
     def __contains__(self, fn_name):
         return fn_name in self._registry
 
-    def configure(
-        self,
-        template=_DEFAULT_TEMPLATE,
-        template_joiner=_DEFAULT_TEMPLATE_JOINER,
-        template_vars=None
-    ):
+    def configure(self, template=_DEFAULT_TEMPLATE, template_joiner=_DEFAULT_TEMPLATE_JOINER):
         self._template = template
         self._template_joiner = template_joiner
-        self._template_vars = {'python_executable': sys.executable}
-        if template_vars is not None:
-            self._template_vars.update(**template_vars)
 
     def register(self, schedule, template_vars=None):
-        fn_cfg = {
-            'schedule': schedule,
-        }
-        if template_vars:
-            fn_cfg['template_vars'] = template_vars
+        if template_vars is not None:
+            template_vars = dict(template_vars, schedule=schedule)
+        else:
+            template_vars =  {'schedule': schedule}
         def wrapper(fn):
-            fn_cfg['_fn'] = fn
+            fn_cfg = {
+                '_fn': fn,
+                'template_vars': template_vars
+            }
             self._registry[fn.__name__] = fn_cfg
             return fn
         return wrapper
@@ -71,13 +65,11 @@ class Cronner:
 
         def _get_entry(fn_cfg):
             template_vars = {
-                'script_path': script_path,
-                'method_name': fn_cfg['_fn'].__name__
+                'method_name': fn_cfg['_fn'].__name__,
+                'python_executable': sys.executable,
+                'script_path': script_path
             }
-            template_vars.update(self._template_vars)
-            if 'template_vars' in fn_cfg:
-                template_vars.update(fn_cfg['template_vars'])
-            template_vars['schedule'] = fn_cfg['schedule']
+            template_vars.update(fn_cfg['template_vars'])
             return string.Template(self._template).safe_substitute(**template_vars)
 
         return [_get_entry(fn_cfg) for fn_cfg in self._registry.values()]
