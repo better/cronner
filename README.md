@@ -2,18 +2,21 @@
 
 [![Build Status](https://travis-ci.org/liambuchanan/cronner.svg?branch=master)](https://travis-ci.org/liambuchanan/cronner)
 
-## Writing a random integer to `/home/randint` every minute
+## Make an HTTPS GET request to `google.com` every minute
 
 Create the following file and name it `test.py`.
 
 ```python
 import cronner
 import random
+try:
+    from urllib.request import urlopen
+except:
+    from urllib import urlopen
 
 @cronner.register('* * * * *')
 def write_randint():
-    with open('/home/randint', 'at') as f:
-            f.write('{}\n'.format(random.randint(0, 100)))
+    urlopen('https://google.com')
 
 cronner.main()
 ```
