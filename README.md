@@ -1,5 +1,7 @@
 # Easily schedule python methods to be run under cron
 
+[![Build Status](https://travis-ci.org/liambuchanan/cronner.svg?branch=master)](https://travis-ci.org/liambuchanan/cronner)
+
 ## Writing a random integer to `/home/randint` every minute
 
 Create the following file and name it `test.py`.
