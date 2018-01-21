@@ -60,7 +60,7 @@ class Cronner:
     def run(self, fn_name, *params):
         self._registry[fn_name]['_fn'](*params)
 
-    def main(self, args=None):
+    def main(self, argv=None):
         commands = {
             'gen-cfg': lambda _: print(self.get_entries()),
             'run': lambda args: self.run(args.fn_name, *args.params)
@@ -77,7 +77,7 @@ class Cronner:
         run_parser.add_argument('fn_name', choices=self._registry.keys())
         run_parser.add_argument('--params', nargs='+', default=[])
 
-        args = parser.parse_args()
+        args = parser.parse_args(argv)
         commands[args.command](args)
 
 
