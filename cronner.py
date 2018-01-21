@@ -9,25 +9,6 @@ import sys
 _DEFAULT_TEMPLATE = '${schedule} ${python_executable} ${script_path} run ${fn_name}'
 _DEFAULT_TEMPLATE_JOINER = '\n'
 
-# Demonstration only
-_K8S_TEMPLATE = '''apiVersion: batch/v2alpha1
-kind: CronJob
-metadata:
-  name: cronner-${fn_name}
-spec:
-  schedule: "${schedule}"
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          nodeSelector:
-            nodepurpose: cronner
-          restartPolicy: Never
-          containers:
-          - name: job-runner
-            image: alpine:3.6
-            command: ["${python_executable}", "${script_path}", "run", "${fn_name}"]'''
-
 
 class Cronner:
     def __init__(self):
@@ -71,6 +52,7 @@ class Cronner:
                 'script_path': script_path
             }
             template_vars.update(fn_cfg['template_vars'])
+            # TODO: user should be able to choose whether this does safe_sub or not
             return string.Template(self._template).safe_substitute(**template_vars)
 
         return self._template_joiner.join([_get_entry(fn_cfg) for fn_cfg in self._registry.values()])
