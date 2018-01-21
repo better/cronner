@@ -1,11 +1,31 @@
 from cronner import Cronner
 
+import contextlib
 import os
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 import sys
 import unittest
 
 
 class TestCronner(unittest.TestCase):
+    @contextlib.contextmanager
+    def captureOutput(self, assert_stdout=None, assert_stderr=None):
+        out, err = sys.stdout, sys.stderr
+        sys.stdout, sys.stderr = StringIO(), StringIO()
+        try:
+            yield
+        finally:
+            sys.stdout.seek(0), sys.stderr.seek(0)
+            actual_stdout, actual_stderr = sys.stdout.read(), sys.stderr.read()
+            sys.stdout, sys.stderr = out, err
+            if assert_stdout is not None:
+                self.assertEqual(actual_stdout, assert_stdout)
+            if assert_stderr is not None:
+                self.assertEqual(actual_stderr, assert_stderr)
+
     def test_run(self):
         state = {}
         cronner = Cronner()
@@ -75,9 +95,46 @@ class TestCronner(unittest.TestCase):
 
     def test_template_vars(self):
         cronner = Cronner()
-        cronner.configure(template='$var')
+        cronner.configure(template='${var}')
         @cronner.register('* * * * *', template_vars={'var': 'template_var'})
         def fn():
             pass
         line = cronner.get_entries()
         self.assertEqual(line, 'template_var')
+
+    def test_main_run(self):
+        cronner = Cronner()
+        @cronner.register('* * * * *')
+        def fn(*args):
+            print('+'.join(args))
+        with self.captureOutput(assert_stdout='a+b+c\n'):
+            cronner.main(['run', 'fn', '--params', 'a', 'b', 'c'])
+
+    def test_main_gen_cfg(self):
+        cronner = Cronner()
+        cronner.configure(template='${schedule} ${fn_name}')
+        @cronner.register('* * * * *')
+        def fn():
+            pass
+        with self.captureOutput(assert_stdout='* * * * * fn\n'):
+            cronner.main(['gen-cfg'])
+
+    def test_main_help(self):
+        cronner = Cronner()
+        @cronner.register('* * * * *')
+        def fn():
+            pass
+        with self.captureOutput():
+            with self.assertRaises(SystemExit) as e:
+                cronner.main(['--help'])
+        self.assertEqual(e.exception.code, 0)
+
+    def test_main_unknown_input(self):
+        cronner = Cronner()
+        @cronner.register('* * * * *')
+        def fn():
+            pass
+        with self.captureOutput():
+            with self.assertRaises(SystemExit) as e:
+                cronner.main(['unknown-input'])
+        self.assertGreater(e.exception.code, 0)
