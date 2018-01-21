@@ -67,13 +67,12 @@ class Cronner:
         }
 
         parser = argparse.ArgumentParser()
-        subparsers = parser.add_subparsers()
+        subparsers = parser.add_subparsers(dest='command')
+        subparsers.required = True
 
         gen_cfg_parser = subparsers.add_parser('gen-cfg')
-        gen_cfg_parser.set_defaults(command='gen-cfg')
 
         run_parser = subparsers.add_parser('run')
-        run_parser.set_defaults(command='run')
         run_parser.add_argument('fn_name', choices=self._registry.keys())
         run_parser.add_argument('--params', nargs='+', default=[])
 

@@ -140,3 +140,14 @@ class TestCronner(unittest.TestCase):
                 cronner.main(['unknown-input'])
             except SystemExit as e:
                 self.assertTrue(e.code > 0)
+
+    def test_main_no_input(self):
+        cronner = Cronner()
+        @cronner.register('* * * * *')
+        def fn():
+            pass
+        with self.captureOutput():
+            try:
+                cronner.main([])
+            except SystemExit as e:
+                self.assertTrue(e.code > 0)
