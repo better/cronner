@@ -125,9 +125,10 @@ class TestCronner(unittest.TestCase):
         def fn():
             pass
         with self.captureOutput():
-            with self.assertRaises(SystemExit) as e:
+            try:
                 cronner.main(['--help'])
-        self.assertEqual(e.exception.code, 0)
+            except SystemExit as e:
+                self.assertEqual(e.code, 0)
 
     def test_main_unknown_input(self):
         cronner = Cronner()
@@ -135,6 +136,7 @@ class TestCronner(unittest.TestCase):
         def fn():
             pass
         with self.captureOutput():
-            with self.assertRaises(SystemExit) as e:
+            try:
                 cronner.main(['unknown-input'])
-        self.assertGreater(e.exception.code, 0)
+            except SystemExit as e:
+                self.assertTrue(e.code > 0)
