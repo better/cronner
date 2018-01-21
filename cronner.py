@@ -1,4 +1,5 @@
 from __future__ import print_function
+import argparse
 import inspect
 import os
 import string
@@ -74,17 +75,28 @@ class Cronner:
 
         return [_get_entry(fn_cfg) for fn_cfg in self._registry.values()]
 
-    def run(self, fn_name, *args):
-        self._registry[fn_name]['_fn'](*args)
+    def run(self, fn_name, *params):
+        self._registry[fn_name]['_fn'](*params)
 
-    def main(self):
-        if len(sys.argv) >= 2 and sys.argv[1] == 'gen-cfg':
-            print(self._template_joiner.join(self.get_entries()))
-        elif len(sys.argv) >= 3 and sys.argv[1] == 'run' and sys.argv[2] in self:
-            self.run(sys.argv[2], *sys.argv[3:])
-        else:
-            print('Unknown instruction', file=sys.stderr)
-            sys.exit(1)
+    def main(self, args=None):
+        commands = {
+            'gen-cfg': lambda _: print(self.get_entries()),
+            'run': lambda args: self.run(args.fn_name, *args.params)
+        }
+
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers()
+
+        gen_cfg_parser = subparsers.add_parser('gen-cfg')
+        gen_cfg_parser.set_defaults(command='gen-cfg')
+
+        run_parser = subparsers.add_parser('run')
+        run_parser.set_defaults(command='run')
+        run_parser.add_argument('fn_name', choices=self._registry.keys())
+        run_parser.add_argument('--params', nargs='+', default=[])
+
+        args = parser.parse_args()
+        commands[args.command](args)
 
 
 _CRONNER = Cronner()
