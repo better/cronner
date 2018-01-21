@@ -73,7 +73,7 @@ class Cronner:
             template_vars.update(fn_cfg['template_vars'])
             return string.Template(self._template).safe_substitute(**template_vars)
 
-        return [_get_entry(fn_cfg) for fn_cfg in self._registry.values()]
+        return self._template_joiner.join([_get_entry(fn_cfg) for fn_cfg in self._registry.values()])
 
     def run(self, fn_name, *params):
         self._registry[fn_name]['_fn'](*params)

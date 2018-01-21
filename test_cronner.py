@@ -29,7 +29,7 @@ class TestCronner(unittest.TestCase):
         @cronner.register('* * * * *')
         def fn():
             pass
-        line = cronner.get_entries()[0]
+        line = cronner.get_entries()
         self.assertEqual(
             line.split(),
             ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(__file__), 'run', 'fn']
@@ -43,7 +43,7 @@ class TestCronner(unittest.TestCase):
         @cronner.register('* * * * *')
         def gn():
             pass
-        lines = cronner.get_entries()
+        lines = cronner.get_entries().split('\n')
         self.assertEqual(
             sorted(line.split() for line in lines),
             sorted([
@@ -51,3 +51,33 @@ class TestCronner(unittest.TestCase):
                 ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(__file__), 'run', 'gn']
             ])
         )
+
+    def test_custom_template(self):
+        cronner = Cronner()
+        cronner.configure(template='custom_template')
+        @cronner.register('* * * * *')
+        def fn():
+            pass
+        line = cronner.get_entries()
+        self.assertEqual(line, 'custom_template')
+
+    def test_custom_template_and_joiner(self):
+        cronner = Cronner()
+        cronner.configure(template='custom_template', template_joiner='+')
+        @cronner.register('* * * * *')
+        def fn():
+            pass
+        @cronner.register('* * * * *')
+        def gn():
+            pass
+        line = cronner.get_entries()
+        self.assertEqual(line, 'custom_template+custom_template')
+
+    def test_template_vars(self):
+        cronner = Cronner()
+        cronner.configure(template='$var')
+        @cronner.register('* * * * *', template_vars={'var': 'template_var'})
+        def fn():
+            pass
+        line = cronner.get_entries()
+        self.assertEqual(line, 'template_var')
