@@ -41,7 +41,7 @@ class Cronner:
         # currently takes the filename from the first stack frame that
         # doesn't have it's code defined in this file
         for frame_record in inspect.stack():
-            if inspect.getmodulename(frame_record[1]) != self.__module__:
+            if inspect.getmodulename(frame_record[1]) not in [self.__module__, 'cronner']:
                 script_path = os.path.abspath(frame_record[1])
                 break
 
