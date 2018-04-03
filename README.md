@@ -1,6 +1,6 @@
 # Easily schedule python functions to be run under cron
 
-[![Build Status](https://travis-ci.org/liambuchanan/cronner.svg?branch=master)](https://travis-ci.org/liambuchanan/cronner)
+[![Build Status](https://travis-ci.org/better/cronner.svg?branch=master)](https://travis-ci.org/better/cronner)
 
 ## Make an HTTPS GET request to `google.com` every minute
 

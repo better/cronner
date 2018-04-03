@@ -6,9 +6,9 @@ setup(
     description='Easily schedule python functions to be run under the cron daemon.',
     py_modules=['cronner'],
     test_suite='test_cronner',
-    url='https://github.com/liambuchanan/cronner',
+    url='https://github.com/better/cronner',
     license='MIT',
     author='Liam Buchanan',
-    author_email='liam.buchanan@gmail.com',
+    author_email='liam@better.com',
     keywords='cron crontab',
 )
