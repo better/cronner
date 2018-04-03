@@ -52,7 +52,7 @@ class TestCronner(unittest.TestCase):
         line = cronner.get_entries()
         self.assertEqual(
             line.split(),
-            ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(__file__), 'run', 'fn']
+            ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', 'fn']
         )
 
     def test_crontab_multiple(self):
@@ -67,8 +67,8 @@ class TestCronner(unittest.TestCase):
         self.assertEqual(
             sorted(line.split() for line in lines),
             sorted([
-                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(__file__), 'run', 'fn'],
-                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(__file__), 'run', 'gn']
+                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', 'fn'],
+                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', 'gn']
             ])
         )
 

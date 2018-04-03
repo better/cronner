@@ -37,19 +37,11 @@ class Cronner:
         return wrapper
 
     def get_entries(self):
-        # TODO: find a better proxy for script_path
-        # currently takes the filename from the first stack frame that
-        # doesn't have it's code defined in this file
-        for frame_record in inspect.stack():
-            if inspect.getmodulename(frame_record[1]) not in [self.__module__, 'cronner']:
-                script_path = os.path.abspath(frame_record[1])
-                break
-
         def _get_entry(fn_cfg):
             template_vars = {
                 'fn_name': fn_cfg['_fn'].__name__,
                 'python_executable': sys.executable,
-                'script_path': script_path
+                'script_path': os.path.abspath(sys.argv[0])
             }
             template_vars.update(fn_cfg['template_vars'])
             # TODO: user should be able to choose whether this does safe_sub or not
