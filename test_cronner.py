@@ -173,5 +173,5 @@ class TestCronner(unittest.TestCase):
 
         cronner.register('* * * * *')(f1)  # This should be fine
         cronner.register('* * * * *')(f1)  # Can register the same function again
-        with self.assertRaises(Exception):
-            cronner.register('* * * * *')(f2)  # Trying to register another function with the same name
+        # However, it should fail if we try to register another function with the same name
+        self.assertRaises(Exception, lambda: cronner.register('* * * * *')(f2))
