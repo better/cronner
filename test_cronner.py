@@ -151,3 +151,27 @@ class TestCronner(unittest.TestCase):
                 cronner.main([])
             except SystemExit as e:
                 self.assertTrue(e.code > 0)
+
+    def test_name_collision(self):
+        cronner = Cronner()
+
+        def get_f1():
+            def f():
+                pass
+            return f
+
+        def get_f2():
+            def f():
+                pass
+            return f
+
+        f1 = get_f1()
+        f2 = get_f2()
+
+        self.assertEquals(f1.__name__, f2.__name__)  # Both their names are 'f'
+        self.assertNotEquals(f1, f2)  # But they are different
+
+        cronner.register('* * * * *')(f1)  # This should be fine
+        cronner.register('* * * * *')(f1)  # Can register the same function again
+        # However, it should fail if we try to register another function with the same name
+        self.assertRaises(Exception, lambda: cronner.register('* * * * *')(f2))

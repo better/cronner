@@ -32,6 +32,9 @@ class Cronner:
                 '_fn': fn,
                 'template_vars': template_vars
             }
+            if fn.__name__ in self._registry and self._registry[fn.__name__] != fn_cfg:
+                raise Exception('Function %s and %s have the same name %s' % (
+                        fn, self._registry[fn.__name__]['_fn'], fn.__name))
             self._registry[fn.__name__] = fn_cfg
             return fn
         return wrapper
