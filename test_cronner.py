@@ -35,6 +35,15 @@ class TestCronner(unittest.TestCase):
         cronner.run('fn')
         self.assertEqual(state, {'a': 1})
 
+    def test_run_different_name(self):
+        state = {}
+        cronner = Cronner()
+        @cronner.register('* * * * *', name='foo')
+        def fn():
+            state['a'] = 2
+        cronner.run('foo')
+        self.assertEqual(state, {'a': 2})
+
     def test_run_with_args(self):
         state = {}
         cronner = Cronner()
@@ -175,3 +184,8 @@ class TestCronner(unittest.TestCase):
         cronner.register('* * * * *')(f1)  # Can register the same function again
         # However, it should fail if we try to register another function with the same name
         self.assertRaises(Exception, lambda: cronner.register('* * * * *')(f2))
+
+        # Let's do it with the name arg as well
+        cronner.register('* * * * *', name='g')(f2)
+        cronner.register('* * * * *', name='g')(f2)
+        self.assertRaises(Exception, lambda: cronner.register('* * * * *', name='g')(f1))
