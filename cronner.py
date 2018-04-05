@@ -41,9 +41,9 @@ class Cronner:
         return wrapper
 
     def get_entries(self):
-        def _get_entry(fn_cfg):
+        def _get_entry(fn_name, fn_cfg):
             template_vars = {
-                'fn_name': fn_cfg['_fn'].__name__,
+                'fn_name': fn_name,
                 'python_executable': sys.executable,
                 'script_path': os.path.abspath(sys.argv[0])
             }
@@ -51,7 +51,7 @@ class Cronner:
             # TODO: user should be able to choose whether this does safe_sub or not
             return string.Template(self._template).safe_substitute(**template_vars)
 
-        return self._template_joiner.join([_get_entry(fn_cfg) for fn_cfg in self._registry.values()])
+        return self._template_joiner.join([_get_entry(fn_name, fn_cfg) for fn_name, fn_cfg in self._registry.items()])
 
     def run(self, fn_name, *params):
         self._registry[fn_name]['_fn'](*params)
