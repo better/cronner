@@ -189,3 +189,12 @@ class TestCronner(unittest.TestCase):
         cronner.register('* * * * *', name='g')(f2)
         cronner.register('* * * * *', name='g')(f2)
         self.assertRaises(Exception, lambda: cronner.register('* * * * *', name='g')(f1))
+
+    def test_explicit_name(self):
+        cronner = Cronner()
+        cronner.configure(template='${fn_name}')
+        @cronner.register('* * * * *', name='g')
+        def fn():
+            pass
+        with self.captureOutput(assert_stdout='g\n'):
+            cronner.main(['gen-cfg'])
