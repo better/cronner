@@ -25,13 +25,13 @@ class Cronner:
     def configure(self, serializer=_default_serializer):
         self._serializer = serializer
 
-    def register(self, schedule, name=None, template_vars=None):
+    def register(self, schedule, template_vars=None):
         if template_vars is not None:
             template_vars = dict(template_vars, schedule=schedule)
         else:
             template_vars =  {'schedule': schedule}
         def wrapper(fn):
-            fn_name = name if name is not None else fn.__name__
+            fn_name = fn.__name__
             fn_cfg = {
                 '_fn': fn,
                 'template_vars': template_vars
