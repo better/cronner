@@ -22,20 +22,21 @@ class Cronner:
         self._template = template
         self._template_joiner = template_joiner
 
-    def register(self, schedule, template_vars=None):
+    def register(self, schedule, name=None, template_vars=None):
         if template_vars is not None:
             template_vars = dict(template_vars, schedule=schedule)
         else:
             template_vars =  {'schedule': schedule}
         def wrapper(fn):
+            fn_name = name if name is not None else fn.__name__
             fn_cfg = {
                 '_fn': fn,
                 'template_vars': template_vars
             }
-            if fn.__name__ in self._registry and self._registry[fn.__name__] != fn_cfg:
+            if fn_name in self._registry and self._registry[fn_name] != fn_cfg:
                 raise Exception('Function %s and %s have the same name %s' % (
-                        fn, self._registry[fn.__name__]['_fn'], fn.__name))
-            self._registry[fn.__name__] = fn_cfg
+                        fn, self._registry[fn_name]['_fn'], fn_name))
+            self._registry[fn_name] = fn_cfg
             return fn
         return wrapper
 
