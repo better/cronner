@@ -22,7 +22,9 @@ class Cronner:
     def __contains__(self, fn_name):
         return fn_name in self._registry
 
-    def configure(self, serializer=_default_serializer):
+    def configure(self, serializer=None):
+        if serializer == None:
+            serializer = _default_serializer
         self._serializer = serializer
 
     def register(self, schedule, template_vars=None):
