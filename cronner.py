@@ -31,7 +31,7 @@ class Cronner:
         else:
             template_vars =  {'schedule': schedule}
         def wrapper(fn):
-            fn_name = fn.__name__
+            fn_name = '{}.{}'.format(fn.__module__, fn.__name__)
             fn_cfg = {
                 '_fn': fn,
                 'template_vars': template_vars

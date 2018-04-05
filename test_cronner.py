@@ -32,7 +32,7 @@ class TestCronner(unittest.TestCase):
         @cronner.register('* * * * *')
         def fn():
             state['a'] = 1
-        cronner.run('fn')
+        cronner.run('{}.{}'.format(fn.__module__, fn.__name__))
         self.assertEqual(state, {'a': 1})
 
     def test_run_with_args(self):
@@ -41,7 +41,7 @@ class TestCronner(unittest.TestCase):
         @cronner.register('* * * * *')
         def fn(a, b):
             state.update(a=a, b=b)
-        cronner.run('fn', 2, 3)
+        cronner.run('{}.{}'.format(fn.__module__, fn.__name__), 2, 3)
         self.assertEqual(state, {'a': 2, 'b': 3})
 
     def test_crontab_single(self):
@@ -52,7 +52,7 @@ class TestCronner(unittest.TestCase):
         line = cronner.get_entries()
         self.assertEqual(
             line.split(),
-            ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', 'fn']
+            ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', '{}.{}'.format(fn.__module__, fn.__name__)]
         )
 
     def test_crontab_multiple(self):
@@ -67,8 +67,8 @@ class TestCronner(unittest.TestCase):
         self.assertEqual(
             sorted(line.split() for line in lines),
             sorted([
-                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', 'fn'],
-                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', 'gn']
+                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', '{}.{}'.format(fn.__module__, fn.__name__)],
+                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', '{}.{}'.format(gn.__module__, gn.__name__)]
             ])
         )
 
@@ -96,15 +96,15 @@ class TestCronner(unittest.TestCase):
         def fn(*args):
             print('+'.join(args))
         with self.captureOutput(assert_stdout='a+b+c\n'):
-            cronner.main(['run', 'fn', '--params', 'a', 'b', 'c'])
+            cronner.main(['run', '{}.{}'.format(fn.__module__, fn.__name__), '--params', 'a', 'b', 'c'])
 
     def test_main_gen_cfg(self):
         cronner = Cronner()
-        cronner.configure(serializer=lambda es: '\n'.join('{} {}'.format(e['schedule'], e['fn_name']) for e in es))
+        cronner.configure(serializer=lambda es: '\n'.join('{}'.format(e['schedule']) for e in es))
         @cronner.register('* * * * *')
         def fn():
             pass
-        with self.captureOutput(assert_stdout='* * * * * fn\n'):
+        with self.captureOutput(assert_stdout='* * * * *\n'):
             cronner.main(['gen-cfg'])
 
     def test_main_help(self):
