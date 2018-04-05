@@ -1,0 +1,13 @@
+---
+version: 1
+reviewers:
+  archerabi:
+    slack: "Abhijith Reddy"
+  erikbern:
+    slack: "Erik Bernhardsson"
+  imsky:
+    slack: "Ivan Malopinsky"
+  liambuchanan:
+    slack: "Liam Buchanan"
+  rabialam:
+    slack: "Rabi Alam"
