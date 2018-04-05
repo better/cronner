@@ -32,17 +32,8 @@ class TestCronner(unittest.TestCase):
         @cronner.register('* * * * *')
         def fn():
             state['a'] = 1
-        cronner.run('fn')
+        cronner.run('{}.{}'.format(fn.__module__, fn.__name__))
         self.assertEqual(state, {'a': 1})
-
-    def test_run_different_name(self):
-        state = {}
-        cronner = Cronner()
-        @cronner.register('* * * * *', name='foo')
-        def fn():
-            state['a'] = 2
-        cronner.run('foo')
-        self.assertEqual(state, {'a': 2})
 
     def test_run_with_args(self):
         state = {}
@@ -50,7 +41,7 @@ class TestCronner(unittest.TestCase):
         @cronner.register('* * * * *')
         def fn(a, b):
             state.update(a=a, b=b)
-        cronner.run('fn', 2, 3)
+        cronner.run('{}.{}'.format(fn.__module__, fn.__name__), 2, 3)
         self.assertEqual(state, {'a': 2, 'b': 3})
 
     def test_crontab_single(self):
@@ -61,7 +52,7 @@ class TestCronner(unittest.TestCase):
         line = cronner.get_entries()
         self.assertEqual(
             line.split(),
-            ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', 'fn']
+            ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', '{}.{}'.format(fn.__module__, fn.__name__)]
         )
 
     def test_crontab_multiple(self):
@@ -76,35 +67,23 @@ class TestCronner(unittest.TestCase):
         self.assertEqual(
             sorted(line.split() for line in lines),
             sorted([
-                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', 'fn'],
-                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', 'gn']
+                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', '{}.{}'.format(fn.__module__, fn.__name__)],
+                ['*', '*', '*', '*', '*', sys.executable, os.path.abspath(sys.argv[0]), 'run', '{}.{}'.format(gn.__module__, gn.__name__)]
             ])
         )
 
-    def test_custom_template(self):
+    def test_custom_serializer(self):
         cronner = Cronner()
-        cronner.configure(template='custom_template')
+        cronner.configure(serializer=lambda _: 'custom_template')
         @cronner.register('* * * * *')
         def fn():
             pass
         line = cronner.get_entries()
         self.assertEqual(line, 'custom_template')
 
-    def test_custom_template_and_joiner(self):
-        cronner = Cronner()
-        cronner.configure(template='custom_template', template_joiner='+')
-        @cronner.register('* * * * *')
-        def fn():
-            pass
-        @cronner.register('* * * * *')
-        def gn():
-            pass
-        line = cronner.get_entries()
-        self.assertEqual(line, 'custom_template+custom_template')
-
     def test_template_vars(self):
         cronner = Cronner()
-        cronner.configure(template='${var}')
+        cronner.configure(serializer=lambda es: '\n'.join(e['var'] for e in es))
         @cronner.register('* * * * *', template_vars={'var': 'template_var'})
         def fn():
             pass
@@ -117,15 +96,15 @@ class TestCronner(unittest.TestCase):
         def fn(*args):
             print('+'.join(args))
         with self.captureOutput(assert_stdout='a+b+c\n'):
-            cronner.main(['run', 'fn', '--params', 'a', 'b', 'c'])
+            cronner.main(['run', '{}.{}'.format(fn.__module__, fn.__name__), '--params', 'a', 'b', 'c'])
 
     def test_main_gen_cfg(self):
         cronner = Cronner()
-        cronner.configure(template='${schedule} ${fn_name}')
+        cronner.configure(serializer=lambda es: '\n'.join('{}'.format(e['schedule']) for e in es))
         @cronner.register('* * * * *')
         def fn():
             pass
-        with self.captureOutput(assert_stdout='* * * * * fn\n'):
+        with self.captureOutput(assert_stdout='* * * * *\n'):
             cronner.main(['gen-cfg'])
 
     def test_main_help(self):
@@ -177,24 +156,10 @@ class TestCronner(unittest.TestCase):
         f1 = get_f1()
         f2 = get_f2()
 
-        self.assertEquals(f1.__name__, f2.__name__)  # Both their names are 'f'
-        self.assertNotEquals(f1, f2)  # But they are different
+        self.assertEqual(f1.__name__, f2.__name__)  # Both their names are 'f'
+        self.assertNotEqual(f1, f2)  # But they are different
 
         cronner.register('* * * * *')(f1)  # This should be fine
         cronner.register('* * * * *')(f1)  # Can register the same function again
         # However, it should fail if we try to register another function with the same name
         self.assertRaises(Exception, lambda: cronner.register('* * * * *')(f2))
-
-        # Let's do it with the name arg as well
-        cronner.register('* * * * *', name='g')(f2)
-        cronner.register('* * * * *', name='g')(f2)
-        self.assertRaises(Exception, lambda: cronner.register('* * * * *', name='g')(f1))
-
-    def test_explicit_name(self):
-        cronner = Cronner()
-        cronner.configure(template='${fn_name}')
-        @cronner.register('* * * * *', name='g')
-        def fn():
-            pass
-        with self.captureOutput(assert_stdout='g\n'):
-            cronner.main(['gen-cfg'])
