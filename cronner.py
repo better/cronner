@@ -6,8 +6,12 @@ import string
 import sys
 
 
-_DEFAULT_TEMPLATE = '${schedule} ${python_executable} ${script_path} run ${fn_name}'
-_DEFAULT_TEMPLATE_JOINER = '\n'
+def _default_serializer(entries):
+    cron_entry_template = '${schedule} ${python_executable} ${script_path} run ${fn_name}'
+    return '\n'.join(
+        string.Template(cron_entry_template).safe_substitute(**entry)
+        for entry in entries
+    )
 
 
 class Cronner:
@@ -18,9 +22,8 @@ class Cronner:
     def __contains__(self, fn_name):
         return fn_name in self._registry
 
-    def configure(self, template=_DEFAULT_TEMPLATE, template_joiner=_DEFAULT_TEMPLATE_JOINER):
-        self._template = template
-        self._template_joiner = template_joiner
+    def configure(self, serializer=_default_serializer):
+        self._serializer = serializer
 
     def register(self, schedule, name=None, template_vars=None):
         if template_vars is not None:
@@ -34,24 +37,19 @@ class Cronner:
                 'template_vars': template_vars
             }
             if fn_name in self._registry and self._registry[fn_name] != fn_cfg:
-                raise Exception('Function %s and %s have the same name %s' % (
-                        fn, self._registry[fn_name]['_fn'], fn_name))
+                raise Exception('Function %s and %s have the same name %s' % (fn, self._registry[fn_name]['_fn'], fn_name))
             self._registry[fn_name] = fn_cfg
             return fn
         return wrapper
 
     def get_entries(self):
-        def _get_entry(fn_name, fn_cfg):
-            template_vars = {
-                'fn_name': fn_name,
-                'python_executable': sys.executable,
-                'script_path': os.path.abspath(sys.argv[0])
-            }
-            template_vars.update(fn_cfg['template_vars'])
-            # TODO: user should be able to choose whether this does safe_sub or not
-            return string.Template(self._template).safe_substitute(**template_vars)
-
-        return self._template_joiner.join([_get_entry(fn_name, fn_cfg) for fn_name, fn_cfg in self._registry.items()])
+        return self._serializer([
+            dict(
+                {'fn_name': fn_name, 'python_executable': sys.executable, 'script_path': os.path.abspath(sys.argv[0])},
+                **fn_cfg['template_vars']
+            )
+            for fn_name, fn_cfg in self._registry.items()
+        ])
 
     def run(self, fn_name, *params):
         self._registry[fn_name]['_fn'](*params)

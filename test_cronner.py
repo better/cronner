@@ -81,30 +81,18 @@ class TestCronner(unittest.TestCase):
             ])
         )
 
-    def test_custom_template(self):
+    def test_custom_serializer(self):
         cronner = Cronner()
-        cronner.configure(template='custom_template')
+        cronner.configure(serializer=lambda _: 'custom_template')
         @cronner.register('* * * * *')
         def fn():
             pass
         line = cronner.get_entries()
         self.assertEqual(line, 'custom_template')
 
-    def test_custom_template_and_joiner(self):
-        cronner = Cronner()
-        cronner.configure(template='custom_template', template_joiner='+')
-        @cronner.register('* * * * *')
-        def fn():
-            pass
-        @cronner.register('* * * * *')
-        def gn():
-            pass
-        line = cronner.get_entries()
-        self.assertEqual(line, 'custom_template+custom_template')
-
     def test_template_vars(self):
         cronner = Cronner()
-        cronner.configure(template='${var}')
+        cronner.configure(serializer=lambda es: '\n'.join(e['var'] for e in es))
         @cronner.register('* * * * *', template_vars={'var': 'template_var'})
         def fn():
             pass
@@ -121,7 +109,7 @@ class TestCronner(unittest.TestCase):
 
     def test_main_gen_cfg(self):
         cronner = Cronner()
-        cronner.configure(template='${schedule} ${fn_name}')
+        cronner.configure(serializer=lambda es: '\n'.join('{} {}'.format(e['schedule'], e['fn_name']) for e in es))
         @cronner.register('* * * * *')
         def fn():
             pass
@@ -177,8 +165,8 @@ class TestCronner(unittest.TestCase):
         f1 = get_f1()
         f2 = get_f2()
 
-        self.assertEquals(f1.__name__, f2.__name__)  # Both their names are 'f'
-        self.assertNotEquals(f1, f2)  # But they are different
+        self.assertEqual(f1.__name__, f2.__name__)  # Both their names are 'f'
+        self.assertNotEqual(f1, f2)  # But they are different
 
         cronner.register('* * * * *')(f1)  # This should be fine
         cronner.register('* * * * *')(f1)  # Can register the same function again
@@ -192,7 +180,7 @@ class TestCronner(unittest.TestCase):
 
     def test_explicit_name(self):
         cronner = Cronner()
-        cronner.configure(template='${fn_name}')
+        cronner.configure(serializer=lambda es: '\n'.join(e['fn_name'] for e in es))
         @cronner.register('* * * * *', name='g')
         def fn():
             pass
