@@ -1,9 +1,13 @@
 from __future__ import print_function
 import argparse
+import importlib
 import inspect
 import os
+import pkgutil
 import string
 import sys
+
+__all__ = ['Cronner', 'configure', 'register', 'main']
 
 
 def _default_serializer(entries):
@@ -53,6 +57,12 @@ class Cronner:
             for fn_name, fn_cfg in self._registry.items()
         ])
 
+    def find_registrations(self, *package_names):
+        for package_name in package_names:
+            pkg = importlib.import_module(package_name)
+            for _, name, _ in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + '.'):
+                importlib.import_module(name, package=pkg)
+
     def run(self, fn_name, *params):
         self._registry[fn_name]['_fn'](*params)
 
@@ -78,5 +88,6 @@ class Cronner:
 
 _CRONNER = Cronner()
 configure = _CRONNER.configure
+find_registrations = _CRONNER.find_registrations
 register = _CRONNER.register
 main = _CRONNER.main
