@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='cronner',
-    version='0.7.2',
+    version='0.7.3',
     description='Easily schedule python functions to be run under the cron daemon.',
     packages=['cronner'],
     test_suite='test_cronner',
