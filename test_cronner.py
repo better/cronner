@@ -1,4 +1,4 @@
-from cronner import Cronner
+from cronner.cronner import Cronner
 
 import contextlib
 import os
