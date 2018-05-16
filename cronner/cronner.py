@@ -1,5 +1,6 @@
 from __future__ import print_function
 import argparse
+import functools
 import importlib
 import inspect
 import os
@@ -7,7 +8,8 @@ import pkgutil
 import string
 import sys
 
-__all__ = ['Cronner', 'configure', 'register', 'main']
+
+__all__ = ['configure', 'find_registrations', 'main', 'register']
 
 
 def _default_serializer(entries):
@@ -26,10 +28,14 @@ class Cronner:
     def __contains__(self, fn_name):
         return fn_name in self._registry
 
-    def configure(self, serializer=None):
-        if serializer == None:
-            serializer = _default_serializer
-        self._serializer = serializer
+    def configure(self, serializer=None, kronjob_template=None):
+        if serializer is not None:
+            self._serializer = serializer
+        elif kronjob_template is not None:
+            from cronner.kronjob_util import serialize_kronjob
+            self._serializer = functools.partial(serialize_kronjob, kronjob_template)
+        else:
+            self._serializer = _default_serializer
 
     def register(self, schedule, template_vars=None):
         if template_vars is not None:
@@ -57,11 +63,12 @@ class Cronner:
             for fn_name, fn_cfg in self._registry.items()
         ])
 
-    def find_registrations(self, *package_names):
-        for package_name in package_names:
-            pkg = importlib.import_module(package_name)
-            for _, name, _ in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + '.'):
-                importlib.import_module(name, package=pkg)
+    def find_registrations(self, *module_names):
+        for module_name in module_names:
+            module = importlib.import_module(module_name)
+            if hasattr(module, '__path__'):  # module is a package
+                for _, name, _ in pkgutil.walk_packages(module.__path__, module.__name__ + '.'):
+                    importlib.import_module(name, package=module)
 
     def run(self, fn_name, *params):
         self._registry[fn_name]['_fn'](*params)
