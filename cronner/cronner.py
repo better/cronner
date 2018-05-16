@@ -63,11 +63,12 @@ class Cronner:
             for fn_name, fn_cfg in self._registry.items()
         ])
 
-    def find_registrations(self, *package_names):
-        for package_name in package_names:
-            pkg = importlib.import_module(package_name)
-            for _, name, _ in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + '.'):
-                importlib.import_module(name, package=pkg)
+    def find_registrations(self, *module_names):
+        for module_name in module_names:
+            module = importlib.import_module(module_name)
+            if hasattr(module, '__path__'):  # module is a package
+                for _, name, _ in pkgutil.walk_packages(module.__path__, module.__name__ + '.'):
+                    importlib.import_module(name, package=module)
 
     def run(self, fn_name, *params):
         self._registry[fn_name]['_fn'](*params)
