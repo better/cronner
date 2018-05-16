@@ -1,11 +1,13 @@
 from __future__ import print_function
 import argparse
+import functools
 import importlib
 import inspect
 import os
 import pkgutil
 import string
 import sys
+
 
 __all__ = ['Cronner', 'configure', 'register', 'main']
 
@@ -26,10 +28,14 @@ class Cronner:
     def __contains__(self, fn_name):
         return fn_name in self._registry
 
-    def configure(self, serializer=None):
-        if serializer == None:
-            serializer = _default_serializer
-        self._serializer = serializer
+    def configure(self, serializer=None, kronjob_template=None):
+        if serializer is not None:
+            self._serializer = serializer
+        elif kronjob_template is not None:
+            from cronner.kronjob_util import serialize_kronjob
+            self._serializer = functools.partial(serialize_kronjob, kronjob_template)
+        else:
+            self._serializer = _default_serializer
 
     def register(self, schedule, template_vars=None):
         if template_vars is not None:
