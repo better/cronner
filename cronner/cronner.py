@@ -9,7 +9,7 @@ import string
 import sys
 
 
-__all__ = ['Cronner', 'configure', 'register', 'main']
+__all__ = ['configure', 'find_registrations', 'main', 'register']
 
 
 def _default_serializer(entries):
