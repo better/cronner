@@ -1,4 +1,3 @@
-import kronjob
 import yaml
 
 
@@ -26,5 +25,4 @@ def serialize_kronjob(base_template, entries):
         validate_kronjob_entry(kronjob_entry)
         kronjob_entry['name'] = kronjob_entry['name'].lower().replace('_', '-').strip('-')  # must be DNS-1123 compliant
     kronjob_def['jobs'] = kronjob_entries
-    k8s_objects = kronjob.build_k8s_objects(kronjob_def)
-    return kronjob.serialize_k8s(k8s_objects)
+    return yaml.safe_dump(kronjob_def)
