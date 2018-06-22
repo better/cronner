@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='cronner',
-    version='0.7.4',
+    version='0.7.5',
     description='Easily schedule python functions to be run under the cron daemon.',
     packages=['cronner'],
     test_suite='test_cronner',
@@ -12,6 +12,6 @@ setup(
     author_email='liam@better.com',
     keywords='cron crontab',
     extras_require={
-        'kronner': ['kronjob', 'pyyaml']
+        'kronner': ['pyyaml']
     }
 )
