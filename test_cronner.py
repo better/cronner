@@ -8,6 +8,7 @@ except ImportError:
     from io import StringIO
 import sys
 import unittest
+import yaml
 
 
 class TestCronner(unittest.TestCase):
@@ -89,6 +90,56 @@ class TestCronner(unittest.TestCase):
             pass
         line = cronner.get_entries()
         self.assertEqual(line, 'template_var')
+
+    def test_custom_template(self):
+
+        template = '\n'.join(['concurrencyPolicy: Allow',
+        'namespace: test',
+        'restartPolicy: Never',
+        'image: 000000000000.dkr.ecr.us-east-1.amazonaws.com/non-existent-image',
+        'labelKey: kronjob/job.test-template',
+        'memoryRequest: 4096Mi',
+        'memoryLimit: 6144Mi',
+        'nodeSelector:',
+          '  group: jobs',
+        'env:',
+          '  - name: ENV',
+            '    value: test'
+        ])
+        template_yaml = yaml.load(template, Loader=yaml.FullLoader)
+        cronner = Cronner()
+        cronner.configure(kronjob_template=template)
+        @cronner.register('* * * * *')
+        def fn():
+            pass
+        spec = yaml.load(cronner.get_entries(), Loader=yaml.FullLoader)
+        self.assertListEqual([spec[k] for k in sorted(template_yaml.keys())], [template_yaml[k] for k in sorted(template_yaml.keys())])
+        self.assertEqual(spec['jobs'][0]['schedule'], '* * * * *')
+        self.assertEqual(spec['jobs'][0]['name'], '{}.{}'.format(fn.__module__, fn.__name__).lower().replace('_', '-').strip('-'))
+        self.assertEqual(spec['jobs'][0]['command'], [sys.executable, os.path.abspath(sys.argv[0]), 'run', '{}.{}'.format(fn.__module__, fn.__name__)])
+
+    def test_template_vars_custom_template(self):
+        template = '\n'.join(['concurrencyPolicy: Allow',
+        'namespace: test',
+        'restartPolicy: Never',
+        'image: 000000000000.dkr.ecr.us-east-1.amazonaws.com/non-existent-image',
+        'labelKey: kronjob/job.test-template',
+        'memoryRequest: 4096Mi',
+        'memoryLimit: 6144Mi',
+        'nodeSelector:',
+          '  group: jobs',
+        'env:',
+          '  - name: ENV',
+            '    value: test'
+        ])
+        template_yaml = yaml.load(template, Loader=yaml.FullLoader)
+        cronner = Cronner()
+        cronner.configure(kronjob_template=template)
+        @cronner.register('* * * * *', template_vars={'foo':'bar'})
+        def fn():
+            pass
+        spec = yaml.load(cronner.get_entries(), Loader=yaml.FullLoader)
+        self.assertEqual(spec['jobs'][0]['foo'], 'bar')
 
     def test_main_run(self):
         cronner = Cronner()
