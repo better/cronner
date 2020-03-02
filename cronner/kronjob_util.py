@@ -6,11 +6,14 @@ class KronjobValidationException(Exception):
 
 
 def format_kronjob_entry(entry):
-    return dict(**{
+    d = {
         'schedule': entry['schedule'],
         'name': entry['fn_name'],
         'command': [entry['python_executable'], entry['script_path'], 'run', entry['fn_name']]
-    }, **{k:entry[k] for k in entry if k not in ['schedule', 'fn_name', 'python_executable', 'script_path']})
+    }
+    # update with template_vars
+    d.update({k:entry[k] for k in entry if k not in ['schedule', 'fn_name', 'python_executable', 'script_path']})
+    return d
 
 def validate_kronjob_entry(entry):
     if len(entry['name']) > 52:

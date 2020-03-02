@@ -32,7 +32,7 @@ class Cronner:
         if serializer is not None:
             self._serializer = serializer
         elif kronjob_template is not None:
-            from cronner.kronjob_util import serialize_kronjob
+            from cronner import serialize_kronjob
             self._serializer = functools.partial(serialize_kronjob, kronjob_template)
         else:
             self._serializer = _default_serializer
