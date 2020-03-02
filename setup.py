@@ -11,6 +11,7 @@ setup(
     author='Liam Buchanan',
     author_email='liam@better.com',
     keywords='cron crontab',
+    tests_require=['pyyaml'],
     extras_require={
         'kronner': ['pyyaml']
     }
